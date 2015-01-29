@@ -47,7 +47,6 @@ module.exports = {
       },
       darwin: {
         VBoxManage : 'VirtualBox not installed. Install before continue.',
-        unfsd: 'unfs3 not installed. Reinstall `azk` or `brew install unfs3` before continuing.',
         network: 'networking error',
       },
       linux: {

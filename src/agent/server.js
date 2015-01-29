@@ -1,6 +1,5 @@
 import { config, async, t, log, path } from 'azk';
 import { VM  }   from 'azk/agent/vm';
-import { Unfsd } from 'azk/agent/unfsd';
 import { Balancer } from 'azk/agent/balancer';
 import { net as net_utils } from 'azk/utils';
 import { AgentStartError } from 'azk/utils/errors';
@@ -26,8 +25,6 @@ var Server = {
       // Virtual machine is required?
       if (this.vm_enabled && config('agent:requires_vm')) {
         yield this.installVM(true);
-        yield this.installShare();
-        yield this.mountShare();
       }
 
       // Load balancer
@@ -43,7 +40,6 @@ var Server = {
       yield this.removeBalancer();
       if (config('agent:requires_vm')) {
         yield this.stopVM();
-        yield this.removeShare();
       }
     });
   },
@@ -54,18 +50,6 @@ var Server = {
 
   removeBalancer() {
     return Balancer.stop();
-  },
-
-  installShare() {
-    return Unfsd.start();
-  },
-
-  removeShare() {
-    return Unfsd.stop();
-  },
-
-  mountShare() {
-    return Unfsd.mount(config("agent:vm:name"));
   },
 
   installVM(start = false) {
