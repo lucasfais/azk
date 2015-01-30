@@ -454,40 +454,59 @@ export class System {
   }
 
   _mounts_to_volumes(mounts) {
+    var expanded_mounts = this._expand_mounts(mounts);
     var volumes = {};
+
+    _.each(expanded_mounts, (paths, point) => {
+      volumes[point] = paths.resolved;
+    });
+
+    return volumes;
+  }
+
+  _expand_mounts(mounts) {
+    var expanded_mounts = {};
 
     // persistent folder
     var persist_base = config('paths:persistent_folders');
     persist_base = path.join(persist_base, this.manifest.namespace);
 
-    return _.reduce(mounts, (volumes, mount, point) => {
+    return _.reduce(mounts, (expanded_mounts, mount, point) => {
       if (_.isString(mount)) {
         mount = { type: 'path', value: mount };
       }
 
-      var target = null;
-      switch (mount.type) {
+      var expanded = null;
+      var resolved = null;
+
+      switch(mount.type) {
         case 'path':
-          target = mount.value;
-          if (!target.match(/^\//)) {
-            target = path.resolve(this.manifest.manifestPath, target);
+          expanded = mount.value;
+
+          if (!expanded.match(/^\//)) {
+            expanded = path.resolve(this.manifest.manifestPath, expanded);
           }
+
+          resolved = expanded;
+
           // TODO: Show error if vbox true and path no match "^/Users/.*"
+
           if (!(mount.options || {}).vbox) {
-            target = (fs.existsSync(target)) ?
-              utils.docker.resolvePath(target) : null;
+            resolved = (fs.existsSync(resolved)) ?
+              utils.docker.resolvePath(resolved) : null;
           }
+
           break;
         case 'persistent':
-          target = path.join(persist_base, mount.value);
+          resolved = path.join(persist_base, mount.value);
           break;
       }
 
-      if (!_.isEmpty(target)) {
-        volumes[point] = target;
+      if (!_.isEmpty(resolved)) {
+        expanded_mounts[point] = { expanded: expanded, resolved: resolved };
       }
 
-      return volumes;
-    }, volumes);
+      return expanded_mounts;
+    }, expanded_mounts);
   }
 }
